@@ -169,10 +169,10 @@ def test_qv41_masks_unreachable_pixels_before_parsing() -> None:
         return base64.b64encode(zlib.compress(bytes(values))).decode()
 
     payload = {
-        "width": 4,
+        "width": 7,
         "height": 1,
-        "map_data": compress([3, 3, 0, 3]),
-        "additional_map_data": compress([0, 2, 2, 4]),
+        "map_data": compress([3, 3, 0, 3, 63, 64, 128]),
+        "additional_map_data": compress([0, 2, 2, 4, 2, 2, 2]),
         "paths": {"points": [{"x": 1, "y": 2}]},
     }
     vacuum.map_data_parser.unpack_map = MagicMock(return_value=json.dumps(payload))
@@ -181,7 +181,15 @@ def test_qv41_masks_unreachable_pixels_before_parsing() -> None:
     vacuum.decode_and_parse(b"encrypted map")
 
     parsed = json.loads(vacuum.map_data_parser.parse.call_args.args[0])
-    assert list(zlib.decompress(base64.b64decode(parsed["map_data"]))) == [3, 0, 0, 3]
+    assert list(zlib.decompress(base64.b64decode(parsed["map_data"]))) == [
+        3,
+        0,
+        0,
+        3,
+        0,
+        64,
+        128,
+    ]
     assert parsed["paths"] == payload["paths"]
 
 
